@@ -9,6 +9,7 @@ interface EnvConfig {
   jwtSecret: string;
   frontendUrl: string;
   corsOrigins: string[];
+  demoMode: boolean;
   azure: {
     clientId: string;
     clientSecret: string;
@@ -32,6 +33,7 @@ export const config: EnvConfig = {
   jwtSecret: getEnv('JWT_SECRET'),
   frontendUrl: getEnv('FRONTEND_URL', 'http://localhost:3000'),
   corsOrigins: getEnv('CORS_ORIGINS', 'http://localhost:3000').split(','),
+  demoMode: getEnv('DEMO_MODE', 'true') === 'true',
   azure: {
     clientId: getEnv('AZURE_CLIENT_ID', ''),
     clientSecret: getEnv('AZURE_CLIENT_SECRET', ''),

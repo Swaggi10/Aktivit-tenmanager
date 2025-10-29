@@ -4,6 +4,10 @@ import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
+// Demo Login
+router.get('/demo/status', authController.getDemoStatus);
+router.post('/demo/login', authController.demoLogin);
+
 // Microsoft Login
 router.get('/microsoft', authController.getMicrosoftLogin);
 router.get('/microsoft/callback', authController.microsoftCallback);

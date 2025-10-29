@@ -4,6 +4,7 @@ Eine moderne, gamifizierte Aufgabenmanagement-Plattform mit Microsoft-Login, Ech
 
 ## Features
 
+- 🎮 **Demo-Modus** - Sofort loslegen ohne Azure AD!
 - 🔐 Microsoft Account Login (Azure AD)
 - 🎮 Gamification (Punkte, Leaderboards, Badges)
 - ⚡ Echtzeit-Kollaboration mit Live-Updates
@@ -29,19 +30,37 @@ Eine moderne, gamifizierte Aufgabenmanagement-Plattform mit Microsoft-Login, Ech
 - Socket.io-client für Echtzeit
 - Framer Motion für Animationen
 
-## Schnellstart mit Docker
+## 🎮 Schnellstart mit Demo-Modus (Empfohlen!)
+
+**Ohne Azure AD - sofort loslegen:**
 
 ```bash
-# 1. Umgebungsvariablen konfigurieren
-cp .env.example .env
-# Bearbeiten Sie .env und fügen Sie Ihre Azure AD Credentials ein
-
-# 2. App starten
+# 1. App starten
 docker-compose up -d
 
-# 3. Im Browser öffnen
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:4000
+# 2. Datenbank initialisieren (nach ~30 Sekunden warten)
+docker-compose exec backend npx prisma migrate deploy
+docker-compose exec backend npm run db:seed
+
+# 3. Im Browser öffnen: http://localhost:3000
+
+# 4. Mit Demo-Accounts einloggen:
+#    - admin@demo.com (Admin-Rechte)
+#    - teamleader@demo.com (Team-Leader)
+#    - member@demo.com (Mitarbeiter)
+```
+
+**Weitere Infos**: [docs/DEMO_MODE.md](docs/DEMO_MODE.md)
+
+## Schnellstart mit Microsoft-Login
+
+Falls Sie Microsoft-Authentifizierung nutzen möchten:
+
+```bash
+# 1. Azure AD konfigurieren (siehe docs/AZURE_SETUP.md)
+# 2. .env-Datei mit Azure-Credentials bearbeiten
+# 3. App starten
+docker-compose up -d
 ```
 
 ## Entwicklung ohne Docker

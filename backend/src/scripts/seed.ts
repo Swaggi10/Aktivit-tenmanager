@@ -50,23 +50,92 @@ async function seed() {
 
     logger.info(`✓ Created ${teams.length} teams`);
 
-    // 2. Admin-User erstellen (Beispiel)
-    logger.info('Creating admin user...');
+    // 2. Demo-User erstellen
+    logger.info('Creating demo users...');
 
-    const adminUser = await prisma.user.upsert({
-      where: { email: 'admin@example.com' },
-      update: {},
-      create: {
-        email: 'admin@example.com',
-        name: 'Admin User',
-        role: Role.ADMIN,
-        teamId: teams[0].id,
-        totalPoints: 0,
-        level: 1,
-      },
-    });
+    const demoUsers = await Promise.all([
+      // Demo Admin
+      prisma.user.upsert({
+        where: { email: 'admin@demo.com' },
+        update: {},
+        create: {
+          email: 'admin@demo.com',
+          name: 'Max Mustermann (Admin)',
+          role: Role.ADMIN,
+          teamId: teams[0].id, // LeadGen + Mailakquise
+          totalPoints: 1250,
+          level: 5,
+        },
+      }),
+      // Demo Team Leader
+      prisma.user.upsert({
+        where: { email: 'teamleader@demo.com' },
+        update: {},
+        create: {
+          email: 'teamleader@demo.com',
+          name: 'Anna Schmidt (Team Leader)',
+          role: Role.TEAM_LEADER,
+          teamId: teams[1].id, // Akquise
+          totalPoints: 850,
+          level: 4,
+        },
+      }),
+      // Demo Member
+      prisma.user.upsert({
+        where: { email: 'member@demo.com' },
+        update: {},
+        create: {
+          email: 'member@demo.com',
+          name: 'Tom Wagner (Member)',
+          role: Role.MEMBER,
+          teamId: teams[2].id, // Sales Development
+          totalPoints: 420,
+          level: 2,
+        },
+      }),
+      // Weitere Demo-Mitarbeiter für realistischeres Leaderboard
+      prisma.user.upsert({
+        where: { email: 'sarah@demo.com' },
+        update: {},
+        create: {
+          email: 'sarah@demo.com',
+          name: 'Sarah Müller',
+          role: Role.MEMBER,
+          teamId: teams[0].id,
+          totalPoints: 680,
+          level: 3,
+        },
+      }),
+      prisma.user.upsert({
+        where: { email: 'michael@demo.com' },
+        update: {},
+        create: {
+          email: 'michael@demo.com',
+          name: 'Michael Becker',
+          role: Role.MEMBER,
+          teamId: teams[1].id,
+          totalPoints: 920,
+          level: 4,
+        },
+      }),
+      prisma.user.upsert({
+        where: { email: 'lisa@demo.com' },
+        update: {},
+        create: {
+          email: 'lisa@demo.com',
+          name: 'Lisa Hoffmann',
+          role: Role.MEMBER,
+          teamId: teams[2].id,
+          totalPoints: 340,
+          level: 2,
+        },
+      }),
+    ]);
 
-    logger.info(`✓ Created admin user: ${adminUser.email}`);
+    logger.info(`✓ Created ${demoUsers.length} demo users`);
+    logger.info('  - admin@demo.com (Admin, 1250 Punkte)');
+    logger.info('  - teamleader@demo.com (Team Leader, 850 Punkte)');
+    logger.info('  - member@demo.com (Member, 420 Punkte)');
 
     // 3. Achievements erstellen
     logger.info('Creating achievements...');
@@ -156,10 +225,12 @@ async function seed() {
 
     logger.info('✅ Database seed completed successfully!');
     logger.info('\n📝 Next steps:');
-    logger.info('1. Configure your Azure AD credentials in .env');
-    logger.info('2. Start the server: npm run dev');
-    logger.info('3. Login with your Microsoft account');
-    logger.info(`4. Admin user email: ${adminUser.email}`);
+    logger.info('1. Start the server: npm run dev');
+    logger.info('2. Open: http://localhost:3000');
+    logger.info('\n🎮 Demo Mode available!');
+    logger.info('  Login with: admin@demo.com (Admin)');
+    logger.info('  Login with: teamleader@demo.com (Team Leader)');
+    logger.info('  Login with: member@demo.com (Member)');
   } catch (error) {
     logger.error('❌ Error seeding database:', error);
     throw error;

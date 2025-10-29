@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getMicrosoftLoginUrl, handleMicrosoftCallback, logout } from '../services/authService';
+import { getMicrosoftLoginUrl, handleMicrosoftCallback, logout, handleDemoLogin } from '../services/authService';
 import { AuthRequest } from '../types';
 import { config } from '../config/env';
 
@@ -47,6 +47,51 @@ export const getCurrentUser = async (req: AuthRequest, res: Response): Promise<v
     success: true,
     data: {
       user: req.user,
+    },
+  });
+};
+
+/**
+ * Demo Login (ohne Azure AD)
+ */
+export const demoLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ success: false, error: 'Email is required' });
+      return;
+    }
+
+    const { user, token } = await handleDemoLogin(email);
+
+    res.json({
+      success: true,
+      data: { user, token },
+    });
+  } catch (error) {
+    res.status(error instanceof Error && error.message.includes('not found') ? 404 : 500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Demo login failed',
+    });
+  }
+};
+
+/**
+ * Demo-Modus Status prüfen
+ */
+export const getDemoStatus = async (_req: Request, res: Response): Promise<void> => {
+  res.json({
+    success: true,
+    data: {
+      enabled: config.demoMode,
+      demoUsers: config.demoMode
+        ? [
+            { email: 'admin@demo.com', role: 'ADMIN', team: 'LeadGen + Mailakquise' },
+            { email: 'teamleader@demo.com', role: 'TEAM_LEADER', team: 'Akquise' },
+            { email: 'member@demo.com', role: 'MEMBER', team: 'Sales Development' },
+          ]
+        : [],
     },
   });
 };

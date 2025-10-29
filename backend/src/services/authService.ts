@@ -108,6 +108,43 @@ export const handleMicrosoftCallback = async (code: string): Promise<{ user: Use
 };
 
 /**
+ * Demo Login (ohne Azure AD)
+ * Für Entwicklung und Tests
+ */
+export const handleDemoLogin = async (email: string): Promise<{ user: User; token: string }> => {
+  // Nur in Development-Modus erlaubt
+  if (config.nodeEnv === 'production' && !config.demoMode) {
+    throw new AppError('Demo login is disabled in production', 403);
+  }
+
+  // Demo-User aus Datenbank laden
+  let user = await prisma.user.findUnique({
+    where: { email },
+    include: { team: true },
+  });
+
+  if (!user) {
+    throw new AppError('Demo user not found. Please run database seed.', 404);
+  }
+
+  // Last active aktualisieren
+  user = await prisma.user.update({
+    where: { id: user.id },
+    data: { lastActive: new Date() },
+    include: { team: true },
+  });
+
+  // JWT Token generieren
+  const token = generateToken({
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  });
+
+  return { user, token };
+};
+
+/**
  * User ausloggen (Token wird client-seitig entfernt)
  */
 export const logout = async (userId: string): Promise<void> => {
