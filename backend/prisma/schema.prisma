@@ -1,0 +1,317 @@
+// Prisma Schema für Aktivitätenmanager
+// PostgreSQL Datenbank
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// BENUTZER & AUTHENTIFIZIERUNG
+// ============================================================
+
+enum Role {
+  ADMIN         // Vollzugriff auf alles
+  TEAM_LEADER   // Zugriff auf eigenes Team-Dashboard
+  MEMBER        // Nur eigene Aufgaben
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  avatarUrl     String?
+
+  // Microsoft Account Integration
+  microsoftId   String?  @unique
+  microsoftData Json?    // Zusätzliche MS-Account Daten
+
+  role          Role     @default(MEMBER)
+  teamId        String
+  team          Team     @relation(fields: [teamId], references: [id])
+
+  // Gamification
+  totalPoints   Int      @default(0)
+  level         Int      @default(1)
+
+  // Status
+  isActive      Boolean  @default(true)
+  lastActive    DateTime @default(now())
+
+  // Zeitstempel
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationen
+  assignedTasks    Task[]       @relation("AssignedTasks")
+  createdTasks     Task[]       @relation("CreatedTasks")
+  comments         Comment[]
+  notifications    Notification[]
+  achievements     UserAchievement[]
+  activityLogs     ActivityLog[]
+
+  @@index([teamId])
+  @@index([email])
+  @@index([microsoftId])
+}
+
+// ============================================================
+// TEAMS
+// ============================================================
+
+enum TeamType {
+  LEADGEN_MAIL   // LeadGen + Mailakquise
+  AKQUISE        // Akquise
+  SALES_DEV      // Sales Development
+}
+
+model Team {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  type            TeamType  @unique
+  description     String?
+  color           String    @default("#3B82F6") // Hex-Color für UI
+
+  // Auslastung (in Stunden pro Woche)
+  maxCapacity     Float     @default(5.0)  // 5 Stunden pro Woche Standard
+
+  // Zeitstempel
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationen
+  members         User[]
+  tasks           Task[]
+
+  @@index([type])
+}
+
+// ============================================================
+// AUFGABEN (TASKS)
+// ============================================================
+
+enum TaskStatus {
+  OPEN           // Offen
+  IN_PROGRESS    // In Bearbeitung
+  REVIEW         // Zur Überprüfung
+  COMPLETED      // Abgeschlossen
+  BLOCKED        // Blockiert
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id              String        @id @default(cuid())
+  title           String
+  description     String?       @db.Text
+
+  status          TaskStatus    @default(OPEN)
+  priority        TaskPriority  @default(MEDIUM)
+
+  // Zeitschätzung in Stunden
+  estimatedHours  Float?
+  actualHours     Float?
+
+  // Deadline
+  dueDate         DateTime?
+
+  // Zuordnung
+  teamId          String
+  team            Team          @relation(fields: [teamId], references: [id])
+
+  assignedToId    String?
+  assignedTo      User?         @relation("AssignedTasks", fields: [assignedToId], references: [id])
+
+  createdById     String
+  createdBy       User          @relation("CreatedTasks", fields: [createdById], references: [id])
+
+  // Gamification
+  pointsReward    Int           @default(10)
+
+  // Zeitstempel
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  completedAt     DateTime?
+
+  // Relationen
+  subtasks        Subtask[]
+  comments        Comment[]
+  activityLogs    ActivityLog[]
+
+  @@index([teamId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// ============================================================
+// UNTERAUFGABEN (SUBTASKS)
+// ============================================================
+
+model Subtask {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+
+  isCompleted   Boolean   @default(false)
+
+  taskId        String
+  task          Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // Gamification
+  pointsReward  Int       @default(5)
+
+  // Zeitstempel
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  completedAt   DateTime?
+
+  @@index([taskId])
+}
+
+// ============================================================
+// KOMMENTARE & MENTIONS
+// ============================================================
+
+model Comment {
+  id            String    @id @default(cuid())
+  content       String    @db.Text
+
+  // Mentions (@username)
+  mentions      String[]  // Array von User-IDs
+
+  taskId        String
+  task          Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  authorId      String
+  author        User      @relation(fields: [authorId], references: [id])
+
+  // Zeitstempel
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([taskId])
+  @@index([authorId])
+}
+
+// ============================================================
+// GAMIFICATION
+// ============================================================
+
+enum AchievementType {
+  FIRST_TASK          // Erste Aufgabe abgeschlossen
+  TASK_STREAK_5       // 5 Aufgaben hintereinander vor Deadline
+  TASK_STREAK_10      // 10 Aufgaben hintereinander vor Deadline
+  TEAM_PLAYER         // 10 Kommentare mit hilfreichen @mentions
+  SPEED_DEMON         // 10 Aufgaben unter geschätzter Zeit
+  PERFECTIONIST       // 20 Aufgaben ohne Revision
+  EARLY_BIRD          // 15 Aufgaben 3+ Tage vor Deadline
+  TEAM_LEADER_MONTH   // Team #1 im Monat
+  CENTURY             // 100 Aufgaben abgeschlossen
+  LEGEND              // 1000 Punkte erreicht
+}
+
+model Achievement {
+  id            String            @id @default(cuid())
+  type          AchievementType   @unique
+  name          String
+  description   String
+  icon          String            // Emoji oder Icon-Name
+  pointsReward  Int               @default(50)
+
+  // Relationen
+  users         UserAchievement[]
+
+  createdAt     DateTime          @default(now())
+}
+
+model UserAchievement {
+  id              String      @id @default(cuid())
+
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  achievementId   String
+  achievement     Achievement @relation(fields: [achievementId], references: [id])
+
+  unlockedAt      DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+// ============================================================
+// BENACHRICHTIGUNGEN
+// ============================================================
+
+enum NotificationType {
+  TASK_ASSIGNED       // Aufgabe zugewiesen
+  TASK_DUE_SOON       // Deadline nähert sich
+  TASK_OVERDUE        // Deadline überschritten
+  MENTIONED           // In Kommentar erwähnt
+  COMMENT_ADDED       // Neuer Kommentar zu eigener Aufgabe
+  ACHIEVEMENT_EARNED  // Achievement freigeschaltet
+  TASK_COMPLETED      // Team-Aufgabe abgeschlossen
+}
+
+model Notification {
+  id          String            @id @default(cuid())
+  type        NotificationType
+  title       String
+  message     String
+
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Verlinkung (z.B. Task-ID)
+  relatedId   String?
+
+  isRead      Boolean           @default(false)
+
+  createdAt   DateTime          @default(now())
+
+  @@index([userId, isRead])
+}
+
+// ============================================================
+// AKTIVITÄTS-LOG (für Admin-Dashboard)
+// ============================================================
+
+enum ActivityType {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_COMPLETED
+  TASK_ASSIGNED
+  SUBTASK_COMPLETED
+  COMMENT_ADDED
+  USER_LOGGED_IN
+}
+
+model ActivityLog {
+  id          String        @id @default(cuid())
+  type        ActivityType
+  description String
+
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  taskId      String?
+  task        Task?         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  metadata    Json?         // Zusätzliche Daten
+
+  createdAt   DateTime      @default(now())
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([createdAt])
+}
