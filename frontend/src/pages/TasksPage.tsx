@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
-  Plus, Filter, Search, Calendar, Clock, User as UserIcon,
+  Plus, Search, Calendar, Clock, User as UserIcon,
   ChevronDown, ChevronUp, Check, X, AlertCircle,
-  CheckSquare, Square, MoreVertical, Edit2, Trash2
+  CheckSquare, Square, Edit2
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { apiRequest } from '@/services/api';
-import { Task, Team, User, Role, TaskStatus, TaskPriority, Subtask } from '@/types';
+import { Task, Team, User, Role, TaskStatus, TaskPriority } from '@/types';
 import toast from 'react-hot-toast';
 
 interface TeamWithMembers extends Team {
@@ -246,14 +246,6 @@ const TaskCard = ({ task, expanded, onToggleExpand, onRefresh, isAdminOrLeader, 
     REVIEW: 'bg-purple-100 text-purple-700',
     COMPLETED: 'bg-success-100 text-success-700',
     BLOCKED: 'bg-danger-100 text-danger-700',
-  };
-
-  const statusLabels: Record<string, string> = {
-    OPEN: 'Offen',
-    IN_PROGRESS: 'In Bearbeitung',
-    REVIEW: 'Review',
-    COMPLETED: 'Abgeschlossen',
-    BLOCKED: 'Blockiert',
   };
 
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';

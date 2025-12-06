@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Users, UserPlus, Edit2, Trash2, X,
+  UserPlus, Edit2, Trash2, X,
   Mail, Shield, AlertCircle
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';

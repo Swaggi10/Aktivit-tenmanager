@@ -4,11 +4,8 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
 
 class SocketService {
   private socket: Socket | null = null;
-  private token: string | null = null;
 
   connect(token: string): Socket {
-    this.token = token;
-
     this.socket = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket'],
