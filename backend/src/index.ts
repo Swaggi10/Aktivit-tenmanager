@@ -14,6 +14,8 @@ import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
 import teamRoutes from './routes/teams';
 import gamificationRoutes from './routes/gamification';
+import userRoutes from './routes/users';
+import notificationRoutes from './routes/notifications';
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -49,6 +51,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/gamification', gamificationRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error Handling
 app.use(notFoundHandler);

@@ -13,6 +13,7 @@ export interface User {
   role: Role;
   teamId: string;
   team: Team;
+  weeklyCapacity: number;
   totalPoints: number;
   level: number;
   isActive: boolean;
@@ -170,6 +171,38 @@ export interface Notification {
   relatedId?: string;
   isRead: boolean;
   createdAt: Date;
+}
+
+// User Workload Types
+export interface UserWorkload {
+  userId: string;
+  name: string;
+  email: string;
+  teamId: string;
+  teamName: string;
+  role: Role;
+  weeklyCapacity: number;
+  currentLoad: number;
+  utilizationPercentage: number;
+  activeTasks: number;
+  overdueTasks: number;
+  isOverloaded: boolean;
+  isUnderutilized: boolean;
+}
+
+// Admin Dashboard Types
+export interface AdminDashboardData {
+  summary: {
+    totalUsers: number;
+    overloadedCount: number;
+    underutilizedCount: number;
+    overdueTaskCount: number;
+  };
+  overloadedUsers: UserWorkload[];
+  underutilizedUsers: UserWorkload[];
+  teamStats: TeamStats[];
+  overdueTasks: Task[];
+  allUsersWorkload: UserWorkload[];
 }
 
 // API Response
